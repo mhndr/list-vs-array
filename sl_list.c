@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include "probes.h"
+
 
 typedef struct _node {
     int64_t data;
@@ -15,7 +17,7 @@ struct pool{
 };
 
 struct pool *free_pool=NULL;
- 
+
 void create_pool(int size) {
 	free_pool = malloc(sizeof(struct pool));
 	free_pool->total_size = size;
@@ -59,6 +61,10 @@ Node* createNode(int64_t data) {
 
 void insertSorted(Node** head, int64_t data) {
     //Node* newNode = createNode(data);
+    /* DTRACE Probes*/
+    if (LISTINSERT_ENTRY_ENABLED()) {
+     	LISTINSERT_ENTRY(data);
+    }
     Node *newNode = get_free_node(data);
 
     if (*head == NULL || (*head)->data >= data) {
@@ -71,6 +77,9 @@ void insertSorted(Node** head, int64_t data) {
         }
         newNode->next = current->next;
         current->next = newNode;
+    }
+    if(LISTINSERT_EXIT_ENABLED()) {
+    	LISTINSERT_EXIT();
     }
 }
 
@@ -106,8 +115,7 @@ int main(int argc, char **argv) {
 	    insertSorted(&head, r);
 	}
 
-	//printList(head);
+//	printList(head);
     freeList(head);
     return 0;
 }
-
