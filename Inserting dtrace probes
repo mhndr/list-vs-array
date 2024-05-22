@@ -1,0 +1,70 @@
+############################complete example###########################
+sh-3.2# sh-3.2# cat probes.d
+provider ListInsert{
+ probe entry(int);
+ probe exit();
+};
+sh-3.2# dtrace -h -s ./probes.d 
+sh-3.2# cat sl_list.c
+.
+.
+.
+void insertSorted(Node** head, int64_t data) {
+    //Node* newNode = createNode(data);
+    if (LISTINSERT_ENTRY_ENABLED()) {
+     	LISTINSERT_ENTRY(data);
+    }
+    .
+    .
+    .
+    .
+
+    if(LISTINSERT_EXIT_ENABLED()) {
+    	LISTINSERT_EXIT();
+    }
+}
+
+.
+.
+.
+sh-3.2# cc  -o sl_list  ./sl_list.c 
+sh-3.2# cat profile_list.d
+ListInsert$target:::entry
+{
+	print(arg0);
+	self->ts = timestamp;
+}
+
+ListInsert$target:::exit
+{
+	@avgt = avg(timestamp - self->ts);
+	 self->ts = 0;
+}
+
+dtrace:::END
+{
+	normalize(@avgt, 1000);
+	printa(@avgt);
+}
+
+
+sh-3.2# dtrace -s ./profile_list.d  -c "./sl_list 5"
+dtrace: script './profile_list.d' matched 3 probes
+0 -> 0 -> 1 -> 4 -> 4 -> NULL
+dtrace: pid 9573 has exited
+CPU     ID                    FUNCTION:NAME
+  4  46297               insertSorted:entry int64_t 0
+
+  4  46297               insertSorted:entry int64_t 0x4
+
+  4  46297               insertSorted:entry int64_t 0
+
+  4  46297               insertSorted:entry int64_t 0x1
+
+  4  46297               insertSorted:entry int64_t 0x4
+
+  6      2                             :END 
+                1
+
+
+sh-3.2# 
