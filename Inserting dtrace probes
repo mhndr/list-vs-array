@@ -28,42 +28,57 @@ void insertSorted(Node** head, int64_t data) {
 .
 sh-3.2# cc  -o sl_list  ./sl_list.c 
 sh-3.2# cat profile_list.d
+dtrace:::BEGIN
+{
+    printf("Starting to measure List Insert function runtime...\n");
+    self->start = 0;
+    @total_time = sum(0);
+    @count = count();
+}
+
 ListInsert$target:::entry
 {
-	print(arg0);
-	self->ts = timestamp;
+    /*print(arg0);*/
+    self->arg = arg0;
+    self->start = timestamp;
 }
 
 ListInsert$target:::exit
+/self->start != 0/
 {
-	@avgt = avg(timestamp - self->ts);
-	 self->ts = 0;
+    self->diff = timestamp - self->start;
+    printf(" - took %dns to insert ",self->diff); 
+    print(self->arg);
+    @avgt= avg(self->diff);
+    @count = count();
+    self->start = 0;
 }
 
 dtrace:::END
 {
-	normalize(@avgt, 1000);
-	printa(@avgt);
+    printa("Total executions: %-@8d\n", @count);
+/*    normalize(@avgt, 1000); */
+    printa("Average time per execution (ns):  %-@8d\n", @avgt);
 }
 
 
-sh-3.2# dtrace -s ./profile_list.d  -c "./sl_list 5"
-dtrace: script './profile_list.d' matched 3 probes
-0 -> 0 -> 1 -> 4 -> 4 -> NULL
-dtrace: pid 9573 has exited
-CPU     ID                    FUNCTION:NAME
-  4  46297               insertSorted:entry int64_t 0
 
-  4  46297               insertSorted:entry int64_t 0x4
 
-  4  46297               insertSorted:entry int64_t 0
 
-  4  46297               insertSorted:entry int64_t 0x1
-
-  4  46297               insertSorted:entry int64_t 0x4
-
-  6      2                             :END 
-                1
-
+sh-3.2# dtrace -qs ./profile_list.d  -c "./sl_list 10"
+0 -> 2 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7 -> 7 -> 7 -> NULL
+Starting to measure List Insert function runtime...
+ - took 709ns to insert int64_t 0x5
+ - took 542ns to insert int64_t 0x2
+ - took 542ns to insert int64_t 0x2
+ - took 583ns to insert int64_t 0x7
+ - took 583ns to insert int64_t 0x7
+ - took 542ns to insert int64_t 0x7
+ - took 584ns to insert int64_t 0x4
+ - took 583ns to insert int64_t 0x7
+ - took 583ns to insert int64_t 0x6
+ - took 584ns to insert int64_t 0
+Total executions: 11      
+Average time per execution (ns):  583 
 
 sh-3.2# 
