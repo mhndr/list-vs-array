@@ -10,7 +10,6 @@ sh-3.2# cat sl_list.c
 .
 .
 void insertSorted(Node** head, int64_t data) {
-    //Node* newNode = createNode(data);
     if (LISTINSERT_ENTRY_ENABLED()) {
      	LISTINSERT_ENTRY(data);
     }
