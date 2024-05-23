@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
-
+#include "probes.h"
 
 int binarySearch(int64_t arr[], int size, int64_t key) {
     int left = 0;
@@ -23,19 +23,24 @@ int binarySearch(int64_t arr[], int size, int64_t key) {
 }
 
 void insertSorted(int64_t arr[], int *size, int64_t key) {
-
+    if(ARRAYINSERT_ENTRY_ENABLED()){
+	ARRAYINSERT_ENTRY(key);
+    }
+	
     int pos = binarySearch(arr, *size, key);
 
-    // Move elements to the right to create space for the new element
- /* 
+    /* 
     for (int i = *size; i > pos; i--) {
         arr[i] = arr[i - 1];
     }
- */
+    */
     memmove(&arr[pos + 1], &arr[pos], (*size - pos) * sizeof(int64_t));
 
     arr[pos] = key;
     (*size)++;
+    if(ARRAYINSERT_EXIT_ENABLED()) {
+	ARRAYINSERT_EXIT();
+    }
 }
 
 void printArray(int64_t arr[], int size) {
@@ -62,6 +67,5 @@ int main(int argc, char **argv){
 	    insertSorted(arr, &size, r);
 	}
 //    printArray(arr, size); 
-
     return 0;
 }
