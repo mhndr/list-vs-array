@@ -1,3 +1,7 @@
+#pragma D option dynvarsize=999999
+#pragma D option cleanrate=50hz
+
+
 dtrace:::BEGIN
 {
     printf("Starting to measure List Insert function runtime...\n");
@@ -17,8 +21,8 @@ ListInsert$target:::exit
 /self->start != 0/
 {
     self->diff = timestamp - self->start;
-    printf(" - took %dns to insert ",self->diff); 
-    print(self->arg);
+    /*printf(" - took %dns to insert ",self->diff); 
+    print(self->arg);*/
     @avgt= avg(self->diff);
     @count = count();
     self->start = 0;
